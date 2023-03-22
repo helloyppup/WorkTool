@@ -34,14 +34,12 @@ class File:
         index=1
         errorReports=[]
         while index<len(self.reports):
-            timeDiff=self.reports[index]-self.reports[index-1]
+            timeDiff=self.reports[index].num-self.reports[index-1].num
             if(timeDiff!=long):
-                tip="NumDiff : "+timeDiff
-                report=ErrorReport(self.reports[index],self.reports[index],tip)
-
-
-
-
+                tip="NumDiff : "+str(timeDiff)
+                errorReports.append(File.ErrorReport(self.reports[index],self.reports[index],tip))
+            index+=1
+        return errorReports
 
 
 """Report是一个列表 装载了数据集合"""
@@ -78,4 +76,5 @@ files_path=fileOpera.get_txt_files("test")
 files=[]
 for path in files_path:
     files.append(File(path))
+
 print(1)
