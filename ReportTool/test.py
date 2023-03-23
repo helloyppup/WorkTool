@@ -1,16 +1,29 @@
 from datetime import datetime
 import os
+from enum import Enum
 
-def SliceLine(line):
+class ETimeType(Enum):
+    min=0
+    sec=1
+    dataTime=2
+
+def SliceLine(line,slicsym=','):
     """切割单行文本"""
     #if(line!="\n"  and "ASC" in line):
-    line_unity=line.split(',')
+    line_unity=line.split(slicsym)
     return line_unity
 
-def GetTime(date_time_str):
+def GetTime(date_time_str,format="%Y%m%d%H%M%S"):
     try:
-      datetime.strptime(date_time_str, "%Y%m%d%H%M%S")
-      return datetime.strptime(date_time_str, "%Y%m%d%H%M%S")
+      datetime.strptime(date_time_str, format)
+      return datetime.strptime(date_time_str, format)
     except ValueError:
         return  False
 
+def TimeDiff(startTime,endTime,timeType=ETimeType.min):
+    if(timeType==ETimeType.min):
+        return (endTime-startTime).seconds//60
+    elif(timeType==ETimeType.sec):
+        return (endTime-startTime).seconds
+    else:
+        return (endTime-startTime)
