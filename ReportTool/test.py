@@ -28,3 +28,6 @@ def TimeDiff(startTime,endTime,timeType=ETimeType.min):
         return (endTime-startTime).seconds
     else:
         return (endTime-startTime)
+
+def Sort(reports):
+    """用来排序一个报文队列，将其转化成buff高优先报文 但是懒得写"""
