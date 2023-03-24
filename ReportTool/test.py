@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 from enum import Enum
 
+
 class ETimeType(Enum):
     min=0
     sec=1

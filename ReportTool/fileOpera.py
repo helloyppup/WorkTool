@@ -1,6 +1,13 @@
 import os
 from enum import Enum
 
+
+class EReportType(Enum):
+    origin = 0
+    sort = 1
+    errorNum = 2
+    errorTime = 3
+
 def get_txt_files(folder_path):
     """ 获取指定文件夹中所有的 .txt 文件，并返回它们的相对路径列表。 """
     txt_files = []
@@ -20,7 +27,7 @@ def Save(path,datas,errorType=""):
     file_name=file_name.split('.')[0]
 
     path = path.rsplit('\\', 1)[0]
-    folder_path = os.path.join(path, '错误数据')
+    folder_path = os.path.join(path, '处理数据')
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 

@@ -1,12 +1,14 @@
 import test,fileOpera,copy
 from datetime import datetime
 from test import ETimeType
+from enum import Enum
+from fileOpera import EReportType
 
 class File:
 
     reports=[]
     file_path="none"
-    reports_errorNum=[]
+    EReportType=[]
     reports_errorTime={}
     reports_Sort=[]
 
@@ -43,23 +45,31 @@ class File:
         file.close()
         return reports
 
-    def ErrorNum(self,long,isFilter=True):
+    def ErrorNum(self,long,reportsType=fileOpera.EReportType.origin,isFilter=True):
         index=1
-        while index<len(self.reports):
-            numDiff=self.reports[index].num-self.reports[index-1].num
+        if reportsType==EReportType.origin:
+            reports=self.reports
+        elif reportsType==EReportType.sort:
+            reports=self.reports_Sort
+        else:
+            print("你输入了没有意义的type，如果你有进行排序，则下面为排序报文进行筛选，否则，对原始报文进行筛选")
+            reports=self.reports if len(self.reports_Sort)==0 else self.reports_Sort
+
+        while index<len(reports):
+            numDiff=reports[index].num-reports[index-1].num
             if(isFilter and numDiff!=0):
                 if(numDiff!=long):
                     tip="NumDiff : "+str(numDiff)
-                    self.reports_errorNum.append(File.ErrorReport(self.reports[index-1],self.reports[index],tip))
+                    self.EReportType.append(File.ErrorReport(reports[index-1],reports[index],tip))
             index+=1
-        print("+++++++++++++++++++++++++++++++++++++++")
-        print(self.file_path + "---error report num:" + str(len(self.reports_errorNum)))
-        print("+++++++++++++++++++++++++++++++++++++++")
-        return self.reports_errorNum
+        print("---------------------------------------")
+        print(self.file_path + "---error report num:" + str(len(self.EReportType)))
+        print("---------------------------------------")
+        return self.EReportType
 
     def ErrorTime(self,diff,reportType,timeType=ETimeType.min,accura=1):
-        # if(reportType in self.reports_errorNum):
-        #     return self.reports_errorNum[reportType]
+        # if(reportType in self.EReportType):
+        #     return self.EReportType[reportType]
         # else:
         index = 1
         errorReports = []
@@ -74,12 +84,12 @@ class File:
         if(len(errorReports)!=0):
             self.reports_errorTime[reportType]=errorReports
 
-            print("+++++++++++++++++++++++++++++++++++++++")
+            print("---------------------------------------")
             print(self.file_path +"--"+ reportType +"---error report time:" +str(len(errorReports)))
             print("---now have error report type :")
             for key in self.reports_errorTime.keys():
                 print(key)
-            print("+++++++++++++++++++++++++++++++++++++++")
+            print("---------------------------------------")
 
             return errorReports
 
@@ -112,7 +122,7 @@ class File:
 
         index = 0
         buffs=[]
-        # print("len:"+str(len(reports)))
+        # 获取所有buff
         while index<len(reports):
             buffOne=[]
             #print(index)
@@ -127,37 +137,42 @@ class File:
             index+=1
 
 
-        # for r in reports :
-        #     print(r.type_head+"----"+str(r.GetElement(-1)))
-        #     if r.type_head=="+BUFF":
-        #         reports.remove(r)
-        #         print("del--"+str(r))
+        #删除报文中的buff
         reports_buffer=self.SeclctBuff()
         for r in reports_buffer:
             reports.remove(r)
             #print("del--" + str(r))
 
+        #记录断点
         breakPoint = []
-        index = 0
+        index = 1
         while index < len(reports):
+            print(reports[index - 1])
+            print(reports[index])
             numDiff = reports[index].num - reports[index - 1].num
             if (numDiff != 1) and (numDiff != 0):
-                breakPoint.append(index)
+                breakPoint.append(index-1)
+                print(reports[index - 1])
+                print(reports[index])
+                print("\n")
             index += 1
 
-        for b in buffs:
+        for b in reversed(buffs):
+            isOver = False
             index=len(breakPoint)-1
-            while index>0:
+            while index>=0:
                 if(reports[breakPoint[index]].num<b[0].num):
                     reports[breakPoint[index]+1:breakPoint[index]+1]=b
                     breakPoint=list(map(lambda x:x+len(b),breakPoint))
+                    print("insert:"+str(reports[breakPoint.pop(index)]))
+                    isOver=True
                 index-=1
-
-
+            #如果再断点列表中没有找到可以插入的地方，就说明这段buff应该在最上面 插入到整个列表前面
+            if not isOver:
+                reports=b+reports
 
         self.reports_Sort=reports
         return self.reports_Sort
-
 
 
 """Report是一个列表 装载了数据集合"""
@@ -202,7 +217,7 @@ class Report:
 # for f in files:
 #    #f.ErrorNum(1)
 #     f.ErrorTime(1,"GTFRI")
-#     fileOpera.Save(f.file_path,f.reports_errorNum,"错误序列号")
+#     fileOpera.Save(f.file_path,f.EReportType,"错误序列号")
 #     fileOpera.Save(f.file_path,f.reports_errorTime,"错误时间")
 
 files_path=fileOpera.get_txt_files("test")
@@ -210,9 +225,9 @@ files=[]
 for path in files_path:
     files.append(File(path))
 
-files[0].ErrorNum(1)
 files[0].Sort()
+files[0].ErrorNum(1,EReportType.sort)
 
 fileOpera.Save(files[0].file_path,files[0].reports_Sort,"Sort")
-fileOpera.Save(files[0].file_path,files[0].reports_errorNum,"错误序列号")
-print(1)
+fileOpera.Save(files[0].file_path,files[0].EReportType,"错误序列号")
+print("+++++++++++++++++++++END++++++++++++++++++++++")
