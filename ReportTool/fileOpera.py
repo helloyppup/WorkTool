@@ -22,8 +22,9 @@ def Save(path,datas,errorType=""):
         print("未出现错误---"+path+"---"+errorType)
         return
     file_name=path.split('\\')[-1]
-    file_name_last=file_name.split('.')[-1]
-    file_name_last="."+file_name_last
+    # file_name_last=file_name.split('.')[-1]
+    # file_name_last="."+file_name_last
+    file_name_last=".txt"
     file_name=file_name.split('.')[0]
 
     path = path.rsplit('\\', 1)[0]

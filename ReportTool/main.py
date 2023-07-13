@@ -4,6 +4,13 @@ from test import ETimeType
 from enum import Enum
 from fileOpera import EReportType
 
+class EDeviceType(Enum):
+    Default=0,
+    TMR100MG=1,
+    GB130TAG=2,
+    GB200S=3,
+
+
 class File:
 
     reports=[]
@@ -12,6 +19,7 @@ class File:
     reports_errorTime={}
     reports_errorNum=[]
     reports_Sort=[]
+    device_type=EDeviceType.Default
 
 
     class ErrorReport:
@@ -27,8 +35,9 @@ class File:
         def __str__(self):
             return (self.lastReport.data_str+"\n"+self.nowReport.data_str+"\n"+"-----"+self.tip+"\n\n")
 
-    def __init__(self,file_path):
+    def __init__(self,file_path,device_type):
         self.file_path=file_path
+        self.device_type=device_type
         self.reports=self.ReadFile(file_path)
         self.IsBuffHigh()
         print(self.file_path+"---file import")
@@ -41,8 +50,8 @@ class File:
         reports=[]
         file = open(file_path, "r", encoding="utf-8")
         for line in file:
-            if (line != "\n" and "+" in line):
-                reports.append(Report(line))
+            if (line != "\n" and ("+RESP" in line) or ("+BUFF" in line) or ("+RSP" in line) or("+BSP" in line)):
+                reports.append(Report(line,self.device_type))
         print(self.file_path + "---report num:"+str(len(reports)))
         file.close()
         return reports
@@ -200,13 +209,17 @@ class Report:
     type_head="FFFF"
     data=[]
     data_str=""
+    device_type=EDeviceType.Default
 
-    def __init__(self,line):
+
+    def __init__(self,line,device_type):
+        self.device_type=device_type
         self.data_str=line.strip()
         self.data=test.SliceLine(line)
         self.time=self.GetTime()
         self.num=self.GetNum()
         self.type=self.GetType()
+
 
     def GetElement(self,index):
         return self.data[index]
@@ -219,10 +232,20 @@ class Report:
         return test.GetTime(time_str)
 
     def GetType(self):
-        type_str=self.data[1]
-        self.type_head = (type_str.split(':'))[1].strip()
-        type_str=type_str.split(':')[-1].strip()
-        return type_str
+        if self.device_type==EDeviceType.TMR100MG:
+            type_str=self.data[1]
+            self.type_head = (type_str.split(':'))[1].strip()
+            type_str=type_str.split(':')[-1].strip()
+            return type_str
+        elif self.device_type==EDeviceType.GB130TAG:
+            type_str = self.data[2][-6:]
+            type_str=type_str[:-1]
+            self.type_head=self.data[1][-4:]
+            return type_str
+        elif self.device_type==EDeviceType.GB200S:
+            type_str=self.data[1]
+            self.type_head=self.data[0]
+            return  type_str
 
     def __str__(self):
         return self.data_str+"\n"
@@ -238,16 +261,43 @@ class Report:
 #     fileOpera.Save(f.file_path,f.EReportType,"错误序列号")
 #     fileOpera.Save(f.file_path,f.reports_errorTime,"错误时间")
 
-files_path=fileOpera.get_txt_files("report")
-files=[]
-for path in files_path:
-    files.append(File(path))
+# files_path=fileOpera.get_txt_files("report")
+# files=[]
+# for path in files_path:
+#     files.append(File(path))
+#
+# files[0].ErrorNum(1)
+# files[0].ErrorTime(100,"GTFRI")
+# print(files[0].IsBuffHigh())
+#
+# fileOpera.Save(files[0].file_path,files[0].reports_Sort,"Sort")
+# fileOpera.Save(files[0].file_path,files[0].reports_errorNum,"错误序列号")
+# fileOpera.Save(files[0].file_path,files[0].reports_errorTime,"错误时间")
+# print("+++++++++++++++++++++END++++++++++++++++++++++")
 
-files[0].ErrorNum(1)
-files[0].ErrorTime(100,"GTFRI")
-print(files[0].IsBuffHigh())
+device_type=EDeviceType.GB130TAG
+f=File("report/新建文本文档.txt",device_type)
+print(1)
+Coners=[]
+Normal=[]
+for i in f.reports:
+    if int(i.data[12 if device_type==EDeviceType.GB200S else 13])%10 == 1:
+        Coners.append(i.data_str+"\n")
+    else:
+        Normal.append(i.data_str+"\n")
 
-fileOpera.Save(files[0].file_path,files[0].reports_Sort,"Sort")
-fileOpera.Save(files[0].file_path,files[0].reports_errorNum,"错误序列号")
-fileOpera.Save(files[0].file_path,files[0].reports_errorTime,"错误时间")
-print("+++++++++++++++++++++END++++++++++++++++++++++")
+fileOpera.Save("report",Coners,"Coners")
+fileOpera.Save("report",Normal,"Normal")
+
+# HBMReports=f.SeclctReport("GTHBM")
+# HBM1=[]
+# HBM0=[]
+# for i in HBMReports:
+#     if int(i.data[12 if device_type==EDeviceType.GB200S else 13])%10 == 1:
+#         HBM1.append(i.data_str+"\n")
+#     else:
+#         HBM0.append(i.data_str+"\n")
+#
+# fileOpera.Save("report",HBM1,"HBM1")
+# fileOpera.Save("report",HBM0,"HBM0")
+
